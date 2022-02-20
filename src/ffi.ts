@@ -1,17 +1,21 @@
 export const SYMBOLS = {
-  deno_init_embedded: {
+  r_init_vm: {
     parameters: [],
     result: "void",
   },
-  deno_release_embedded: {
+  r_release_vm: {
     parameters: [],
     result: "void",
   },
-  deno_invoke_add1: {
+  r_load: {
     parameters: ["pointer"],
-    result: "i32",
+    result: "void",
   },
-  deno_new_i32_vector: {
+  r_call: {
+    parameters: ["pointer", "pointer"],
+    result: "void",
+  },
+  r_c: {
     parameters: ["i32", "pointer"],
     result: "pointer",
   },

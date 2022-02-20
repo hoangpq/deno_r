@@ -4,30 +4,36 @@ import * as path from "https://deno.land/std@0.125.0/path/mod.ts";
 const { __dirname } = __(import.meta);
 
 import { SYMBOLS } from "./ffi.ts";
+import { encode } from "./util.ts";
 
 let R!: Deno.DynamicLibrary<typeof SYMBOLS>["symbols"];
 
 try {
-  R =
-    Deno.dlopen(
-      path.join(__dirname, "..", "/target/debug/libr_binding.dylib"),
-      SYMBOLS,
-    ).symbols;
+  R = Deno.dlopen(
+    path.join(__dirname, "..", "/target/debug/libr_binding.dylib"),
+    SYMBOLS,
+  ).symbols;
 } catch (e) {
   console.log(e.message);
 }
 
 type SEXP = any;
 
-export const invoke_add1 = R.deno_invoke_add1;
+export function r_load(path: string) {
+  R.r_load(encode(path));
+}
 
-export function int32list(...elements: number[]): SEXP {
+export function r_call(func: string, arg: SEXP) {
+  R.r_call(encode(func), arg);
+}
+
+export function c(...elements: number[]): SEXP {
   const buf = new Uint32Array(elements);
-  return R.deno_new_i32_vector(buf.length, buf);
+  return R.r_c(buf.length, buf);
 }
 
 export function runR(handler: () => any) {
-  R.deno_init_embedded();
+  R.r_init_vm();
   handler();
-  R.deno_release_embedded();
+  R.r_release_vm();
 }

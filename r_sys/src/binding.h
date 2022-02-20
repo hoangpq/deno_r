@@ -15,10 +15,13 @@
 extern "C" {
 #endif
 
-R_API int invoke(SEXP);
-R_API void init_embedded_r();
-R_API void release_embedded_r();
-R_API SEXP new_integer_vector(int, int *);
+// VM
+R_API void init_vm_r();
+R_API void release_vm_r();
+
+R_API SEXP c(u_int32_t, int *);
+R_API void r_load(const char *);
+R_API void r_call(const char *, SEXP);
 
 #ifdef __cplusplus
 }

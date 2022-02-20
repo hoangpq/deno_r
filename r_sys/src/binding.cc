@@ -1,6 +1,20 @@
 #include "binding.h"
 
-void source(const char *name) {
+/**
+ * Create new R vector
+ */
+SEXP c(u_int32_t len, int *val) {
+    SEXP arg;
+
+    PROTECT(arg = allocVector(INTSXP, len));
+    memcpy(INTEGER(arg), val, len * sizeof(int));
+    return arg;
+}
+
+/**
+ * Load R function to environment
+ */
+void r_load(const char *name) {
     SEXP e;
 
     PROTECT(e = lang2(install("source"), mkString(name)));
@@ -8,33 +22,22 @@ void source(const char *name) {
     UNPROTECT(1);
 }
 
-SEXP new_integer_vector(int len, int *a) {
-    SEXP arg;
-    PROTECT(arg = allocVector(INTSXP, len));
-    memcpy(INTEGER(arg), a, len * sizeof(int));
-    return arg;
-}
-
 /**
- * Wrapper for R function add1, defined in func.R.
+ * Invoke R function
  */
-void R_add1(SEXP arg) {
-    // Set up a call to the R function
-    SEXP add1_call;
-    PROTECT(add1_call = lang2(install("add1"), arg));
+void r_call(const char *name, SEXP arg) {
+    SEXP func_;
+    PROTECT(func_ = lang2(install(name), arg));
 
     // Execute the function
     int errorOccurred;
-    SEXP ret = R_tryEval(add1_call, R_GlobalEnv, &errorOccurred);
+    SEXP ret = R_tryEval(func_, R_GlobalEnv, &errorOccurred);
 
     if (!errorOccurred) {
-        printf("R returned: ");
-
         double *val = REAL(ret);
         for (int i = 0; i < LENGTH(ret); i++) {
-            printf("%0.1f, ", val[i]);
+            printf("%d, ", (int) val[i]);
         }
-
         printf("\n");
     } else {
         printf("Error occurred calling R\n");
@@ -43,21 +46,15 @@ void R_add1(SEXP arg) {
     UNPROTECT(2);
 }
 
-void init_embedded_r() {
-    // Init R environment
+// Init R environment
+void init_vm_r() {
     int r_argc = 2;
     char *r_argv[] = {"R", "--silent"};
+
     Rf_initEmbeddedR(r_argc, r_argv);
 }
 
-void release_embedded_r() {
-    // Release R environment
+// Release R environment
+void release_vm_r() {
     Rf_endEmbeddedR(0);
-}
-
-int invoke(SEXP arg) {
-    // Invoke a function in R
-    source("func.R");
-    R_add1(arg);
-    return (0);
 }
