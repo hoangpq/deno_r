@@ -17,19 +17,70 @@ try {
   console.log(e.message);
 }
 
-type SEXP = any;
+const ELT_SETTER: Record<string, any> = {
+  "number": R.SET_INTEGER_ELT,
+  "string": R.SET_STRING_ELT,
+};
+
+const SEXPTYPE: Record<string, number> = {
+  "number": 13, /* integer vectors */
+  "string": 16, /* string vectors */
+};
+
+export type RConvertible =
+  | number
+  | bigint
+  | null
+  | undefined
+  | boolean
+  | Sexp
+  | string;
+
+export class Sexp {
+  constructor(public handle: Deno.UnsafePointer, public primitive: any = null) {
+  }
+
+  static from<T extends RConvertible>(v: T): Sexp {
+    switch (typeof v) {
+      case "string":
+        return new Sexp(
+          R.Rf_mkCharLen(encode(v), v.length) as Deno.UnsafePointer,
+        );
+
+      default:
+        throw new TypeError(`Unsupported type: ${typeof v}`);
+    }
+  }
+}
 
 export function r_load(path: string) {
   R.r_load(encode(path));
 }
 
-export function r_call(func: string, arg: SEXP) {
-  R.r_call(encode(func), arg);
+export function r_call(func: string, arg: Sexp) {
+  R.r_call(encode(func), arg.handle);
 }
 
-export function c(...elements: number[]): SEXP {
-  const buf = new Uint32Array(elements);
-  return R.r_c(buf.length, buf);
+export function c(...elems: any[]): Sexp {
+  if (elems.length === 0) throw new Error("Empty list!");
+
+  const valueType = typeof elems[0];
+  const sexpType = SEXPTYPE[typeof elems[0]];
+
+  const v_ = R.Rf_protect(R.Rf_allocVector(sexpType, elems.length));
+  R.R_PreserveObject(v_);
+
+  const setter = ELT_SETTER[valueType];
+
+  for (let i = 0; i < elems.length; i++) {
+    const v = elems[i];
+    if (valueType === "string") {
+      setter(v_, i, R.Rf_mkCharLen(encode(v), v.length) as Deno.UnsafePointer);
+    } else {
+      setter(v_, i, v);
+    }
+  }
+  return new Sexp(v_);
 }
 
 export function runR(handler: () => any) {

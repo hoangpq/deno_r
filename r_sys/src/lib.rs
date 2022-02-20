@@ -8,6 +8,7 @@ extern "C" {
     pub fn init_vm_r();
     pub fn release_vm_r();
     pub fn r_load(module: *const c_char);
-    pub fn r_call(method: *const c_char, arg: SEXP);
+    pub fn r_call(method: *const c_char, arg: SEXP) -> SEXP;
     pub fn c(len: u32, ptr: *const i32) -> SEXP;
+    pub fn int_to_r(val: i32) -> SEXP;
 }

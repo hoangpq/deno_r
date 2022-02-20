@@ -19,5 +19,6 @@ macro_rules! export {
 export!(r_init_vm, fn init_vm_r());
 export!(r_release_vm, fn release_vm_r());
 export!(r_load, fn r_load(module: *const c_char));
-export!(r_call, fn r_call(fname: *const c_char, arg: SEXP));
+export!(r_call, fn r_call(fname: *const c_char, arg: SEXP) -> SEXP);
 export!(r_c, fn c(len: u32, value: *const i32) -> SEXP);
+export!(r_int_to_r, fn int_to_r(val: i32) -> SEXP);

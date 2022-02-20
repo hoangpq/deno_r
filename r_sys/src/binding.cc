@@ -25,7 +25,7 @@ void r_load(const char *name) {
 /**
  * Invoke R function
  */
-void r_call(const char *name, SEXP arg) {
+SEXP r_call(const char *name, SEXP arg) {
     SEXP func_;
     PROTECT(func_ = lang2(install(name), arg));
 
@@ -33,17 +33,25 @@ void r_call(const char *name, SEXP arg) {
     int errorOccurred;
     SEXP ret = R_tryEval(func_, R_GlobalEnv, &errorOccurred);
 
-    if (!errorOccurred) {
-        double *val = REAL(ret);
+
+    if (Rf_isString(ret) == Rboolean::TRUE) {
+        SEXP *val2 = STRING_PTR(ret);
         for (int i = 0; i < LENGTH(ret); i++) {
-            printf("%d, ", (int) val[i]);
+            printf("%s\n", RAW_OR_NULL(val2[i]));
         }
-        printf("\n");
     } else {
-        printf("Error occurred calling R\n");
+        double *val = REAL(ret);
+        printf("%s\n", Rf_isReal(ret) == Rboolean::TRUE ? "true" : "false");
+
+        for (int i = 0; i < LENGTH(ret); i++) {
+            printf("%d\n", (int) val[i]);
+        }
     }
 
+
     UNPROTECT(2);
+
+    return ret;
 }
 
 // Init R environment

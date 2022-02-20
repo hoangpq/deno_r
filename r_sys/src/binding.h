@@ -21,7 +21,8 @@ R_API void release_vm_r();
 
 R_API SEXP c(u_int32_t, int *);
 R_API void r_load(const char *);
-R_API void r_call(const char *, SEXP);
+R_API SEXP r_call(const char *, SEXP);
+R_API SEXP int_to_r(int);
 
 #ifdef __cplusplus
 }
